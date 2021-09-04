@@ -1,24 +1,17 @@
-var express = require('express');
-var router = express.Router();
+const express = require('express');
+const { ObjectId } = require('mongodb');
+const getCollection = require('../database/mongo');
+const router = express.Router();
 
-const users = [
-  {
-    id: 1,
-    name: 'Nick',
-  },
-  {
-    id: 2,
-    name: 'Nataly',
-  }
-]
 
 /* GET users listing. */
-router.get('/', (req, res, next) => {
-  res.send(users);
+router.get('/', async (req, res) => {
+  res.json(await getCollection('users'))
 });
 
-router.get('/:id', (req, res, next) => {
-  res.send(users.find(user => user.id === req.params.id))
+router.get('/:id', async (req, res) => {
+  const userArr = await getCollection('users', { _id: ObjectId(req.params.id) })
+  res.json(userArr.length > 0 ? userArr[0] : {error: 'No such user'})
 })
 
 module.exports = router;

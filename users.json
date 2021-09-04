@@ -1,0 +1,2 @@
+{"_id":{"$oid":"6133dd912aa3e41ba85ff478"},"id":{"$numberInt":"1"},"name":"Иванов И.И.","login":"ivanov_i_i","password":"ivan123"}
+{"_id":{"$oid":"6133dd912aa3e41ba85ff479"},"id":{"$numberInt":"2"},"name":"Петров П.П.","login":"petrov_p_p","password":"petr123"}
