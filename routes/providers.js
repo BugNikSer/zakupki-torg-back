@@ -5,7 +5,7 @@ const { getCollection } = require('../database/mongo');
 const router = express.Router();
 
 router.get('/', (req, res) => {
-    getCollection('customers')
+    getCollection('providers')
         .then((data) => {
             res.json(data);
         })
@@ -13,7 +13,7 @@ router.get('/', (req, res) => {
 });
 
 router.get('/:id', (req, res) => {
-    getCollection('customers', { _id: ObjectId(req.params.id) })
+    getCollection('providers', { _id: ObjectId(req.params.id) })
         .then((data) => {
             if (data.length > 0) {
                 res.json(data[0]);
