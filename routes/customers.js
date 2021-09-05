@@ -1,11 +1,16 @@
 const { json } = require('express');
 const express = require('express');
 const { ObjectId } = require('mongodb');
-const { getCollection } = require('../database/mongo');
+const { getCollection, joinCollection } = require('../database/mongo');
 const router = express.Router();
 
 router.get('/', (req, res) => {
-    getCollection('customers')
+    const filters = Object.entries(req.query).reduce((result, [key, value]) => {
+        result[key] = { $regex: value };
+        return result;
+    }, {});
+
+    getCollection('customers', filters)
         .then((data) => {
             res.json(data);
         })
@@ -13,7 +18,24 @@ router.get('/', (req, res) => {
 });
 
 router.get('/:id', (req, res) => {
-    getCollection('customers', { _id: ObjectId(req.params.id) })
+    joinCollection('customers', [
+        {
+            $match: { _id: ObjectId(req.params.id) },
+        },
+        {
+            $addFields: {
+                id: { $toString: '$_id' },
+            },
+        },
+        {
+            $lookup: {
+                from: 'auctions',
+                localField: 'id',
+                foreignField: 'customerId',
+                as: 'auctions',
+            },
+        },
+    ])
         .then((data) => {
             if (data.length > 0) {
                 res.json(data[0]);

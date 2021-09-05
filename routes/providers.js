@@ -5,7 +5,12 @@ const { getCollection } = require('../database/mongo');
 const router = express.Router();
 
 router.get('/', (req, res) => {
-    getCollection('providers')
+    const filters = Object.entries(req.query).reduce((result, [key, value]) => {
+        result[key] = { $regex: value };
+        return result;
+    }, {});
+
+    getCollection('providers', filters)
         .then((data) => {
             res.json(data);
         })
