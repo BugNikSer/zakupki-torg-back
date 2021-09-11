@@ -5,6 +5,7 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var cors = require('cors');
 
+const { checkTables } = require('./database/postgres');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var customersRouter = require('./routes/customers');
@@ -24,11 +25,14 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
-app.use('/customers', customersRouter);
-app.use('/providers', providersRouter);
-app.use('/auctions', auctionsRouter);
+// app.use('/', indexRouter);
+app.use(express.static(
+  path.join(__dirname, "/public")
+))
+app.use('/rest/users', usersRouter);
+app.use('/rest/customers', customersRouter);
+app.use('/rest/providers', providersRouter);
+app.use('/rest/auctions', auctionsRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -45,5 +49,7 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 });
+
+checkTables(['AUCTIONS'])
 
 module.exports = app;

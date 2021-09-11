@@ -1,8 +1,9 @@
-const { json } = require('express');
 const express = require('express');
-const { ObjectId } = require('mongodb');
-const { getCollection, joinCollection } = require('../database/mongo');
+const { select, insert } = require('../database/postgres');
 const router = express.Router();
+
+const customers = 'customers';
+const auctions = 'auctions';
 
 router.get('/', (req, res) => {
     const filters = Object.entries(req.query).reduce((result, [key, value]) => {
@@ -10,40 +11,42 @@ router.get('/', (req, res) => {
         return result;
     }, {});
 
-    getCollection('customers', filters)
-        .then((data) => {
-            res.json(data);
+    select(customers, filters)
+        .then((rows) => {
+            res.json(rows);
         })
-        .catch(json.error);
+        .catch((e) => {
+            res.status(500).send(e);
+        });
 });
 
 router.get('/:id', (req, res) => {
-    joinCollection('customers', [
-        {
-            $match: { _id: ObjectId(req.params.id) },
-        },
-        {
-            $addFields: {
-                id: { $toString: '$_id' },
-            },
-        },
-        {
-            $lookup: {
-                from: 'auctions',
-                localField: 'id',
-                foreignField: 'customerId',
-                as: 'auctions',
-            },
-        },
-    ])
-        .then((data) => {
-            if (data.length > 0) {
-                res.json(data[0]);
-            } else {
-                res.error({ error: 'No such user' });
-            }
+    const id = req.params.id
+    const customerPromise = select(customers, { id: id });
+    const autcionsPromise = select(auctions, { customerid: id });
+
+    Promise.allSettled([customerPromise, autcionsPromise]).then(([customer, auctionsList]) => {
+        res.json({
+            ...customer.value[0],
+            auctions: auctionsList.value,
         })
-        .catch(res.error);
+    }).catch(e => {
+        res.status(500).send(e);
+    })
+});
+
+router.post('/', (req, res) => {
+    if (req.hasOwnProperty('body')) {
+        insert(customers, req.body)
+            .then((id) => {
+                res.json(id);
+            })
+            .catch((e) => {
+                res.status(500).send(e);
+            });
+    } else {
+        res.status(500).send('No body got');
+    }
 });
 
 module.exports = router;

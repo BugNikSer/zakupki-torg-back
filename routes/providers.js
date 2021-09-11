@@ -1,8 +1,8 @@
-const { json } = require('express');
 const express = require('express');
-const { ObjectId } = require('mongodb');
-const { getCollection } = require('../database/mongo');
+const { select, insert } = require('../database/postgres');
 const router = express.Router();
+
+const providers = 'providers';
 
 router.get('/', (req, res) => {
     const filters = Object.entries(req.query).reduce((result, [key, value]) => {
@@ -10,23 +10,37 @@ router.get('/', (req, res) => {
         return result;
     }, {});
 
-    getCollection('providers', filters)
-        .then((data) => {
-            res.json(data);
+    select(providers, filters)
+        .then((rows) => {
+            res.json(rows);
         })
-        .catch(json.error);
+        .catch((e) => {
+            res.status(500).send(e);
+        });
 });
 
 router.get('/:id', (req, res) => {
-    getCollection('providers', { _id: ObjectId(req.params.id) })
-        .then((data) => {
-            if (data.length > 0) {
-                res.json(data[0]);
-            } else {
-                res.error({ error: 'No such user' });
-            }
+    select(providers, { id: req.params.id })
+        .then((rows) => {
+            res.json(rows[0]);
         })
-        .catch(res.error);
+        .catch((e) => {
+            res.status(500).send(e);
+        });
+});
+
+router.post('/', (req, res) => {
+    if (req.hasOwnProperty('body')) {
+        insert(providers, req.body)
+            .then((id) => {
+                res.json(id);
+            })
+            .catch((e) => {
+                res.status(500).send(e);
+            });
+    } else {
+        res.status(500).send('No body got');
+    }
 });
 
 module.exports = router;
