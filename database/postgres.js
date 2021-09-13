@@ -50,22 +50,33 @@ const checkTables = () => {
         });
 };
 
-const select = (table, filters) => {
-    const reducedFilters = Object.entries(filters)
-        .reduce((result, [key, value]) => {
-            if (key === 'id' || key.slice(-2) === 'id') {
-                result.push(`${key} = '${value}'`);
-            } else {
-                result.push(`${key} LIKE '${value}'`);
-            }
-            return result;
-        }, [])
-        .join(' AND ');
+const select = (table, filters, join) => {
+    let query = `SELECT * FROM ${table}`;
 
-        console.log(`SELECT * FROM ${table}${reducedFilters === '' ? '' : ' WHERE ' + reducedFilters};`)
+    if (join) {
+        const { joining, local, foreign } = join;
+        let computedJoin = ` INNER JOIN ${joining} ON ${table}.${local} = ${joining}.${foreign}`;
+        query += computedJoin;
+    };
+
+    // if (filters) {
+    // let computedFilters = Object.entries(filters)
+    //         .reduce((result, [key, value]) => {
+    //             if (key === 'id' || key.slice(-2) === 'id') {
+    //                 result.push(`${key} = '${value}'`);
+    //             } else {
+    //                 result.push(`${key} LIKE '${value}'`);
+    //             }
+    //             return result;
+    //         }, [])
+    //         .join(' AND ');
+    //     query += ' WHERE ' + computedFilters;
+    // }
+
+    console.log(query)
 
     return client
-        .query(`SELECT * FROM ${table}${reducedFilters === '' ? '' : ' WHERE ' + reducedFilters};`)
+        .query(query)
         .then((res) => res.rows)
         .catch((e) => {
             throw `query error: ${e}`;

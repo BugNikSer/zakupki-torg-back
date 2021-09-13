@@ -3,6 +3,7 @@ const { select, insert } = require('../database/postgres');
 const router = express.Router();
 
 const auctions = 'auctions';
+const customers = 'customers';
 
 router.get('/', (req, res) => {
     const filters = Object.entries(req.query).reduce((result, [key, value]) => {
@@ -10,9 +11,9 @@ router.get('/', (req, res) => {
         return result;
     }, {});
 
-    select(auctions, filters)
+    select(auctions, filters, { joining: customers, local: 'customerid', foreign: 'id' })
         .then((rows) => {
-            res.json(rows);
+            res.json(rows)
         })
         .catch((e) => {
             res.status(500).send(e);
